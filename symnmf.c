@@ -91,6 +91,25 @@ double **read_data_file(const char *file_name, int rows, int cols)
     return data;
 }
 
+double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int cols2)
+{
+    double **result = init_matrix(rows1, cols2);
+    if (!result)
+        return NULL;
+
+    for (int i = 0; i < rows1; i++)
+    {
+        for (int j = 0; j < cols2; j++)
+        {
+            for (int k = 0; k < cols1; k++)
+            {
+                result[i][j] += mat1[i][k] * mat2[k][j];
+            }
+        }
+    }
+    return result;
+}
+
 // Functions of Project //
 //----------------------------------------------------------------------/
 
@@ -305,25 +324,6 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
     free(line);
     fclose(file);
     return 1;
-}
-
-double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int cols2)
-{
-    double **result = init_matrix(rows1, cols2);
-    if (!result)
-        return NULL;
-
-    for (int i = 0; i < rows1; i++)
-    {
-        for (int j = 0; j < cols2; j++)
-        {
-            for (int k = 0; k < cols1; k++)
-            {
-                result[i][j] += mat1[i][k] * mat2[k][j];
-            }
-        }
-    }
-    return result;
 }
 
 double **transpose_matrix(double **matrix, int rows, int cols)
