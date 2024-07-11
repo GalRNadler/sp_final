@@ -114,8 +114,7 @@ double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int
     return result;
 }
 
-// Functions of Project //
-//----------------------------------------------------------------------/
+/*Functions of Project*/
 
 double **init_matrix(int rows, int cols)
 {
@@ -199,13 +198,13 @@ double **normalize_similarity_matrix(int num_points, int dim, double **points)
         return NULL;
     }
 
-    // Compute D^(-1/2)
+    /*Compute D^(-1/2)*/
     for (i = 0; i < num_points; i++)
     {
         D[i][i] = 1.0 / sqrt(D[i][i]);
     }
 
-    // Compute normalized similarity matrix: D^(-1/2) * A * D^(-1/2)
+    /*Compute normalized similarity matrix: D^(-1/2) * A * D^(-1/2)*/
     double **DA = matrix_multiply(D, A, num_points, num_points, num_points);
     double **DAD = matrix_multiply(DA, D, num_points, num_points, num_points);
 
@@ -307,7 +306,7 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
     *num_points = 0;
     char ch;
 
-    // Check if file is empty
+    /*Check if file is empty*/
     if ((ch = fgetc(file)) == EOF)
     {
         fprintf(stderr, "Error: File is empty\n");
@@ -316,15 +315,15 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
     }
     ungetc(ch, file);
 
-    // Count features in the first line
+    /*Count features in the first line*/
     while ((ch = fgetc(file)) != '\n' && ch != EOF)
     {
         if (ch == ',')
             (*num_features)++;
     }
-    (*num_features)++; // Count the last feature
+    (*num_features)++; /*Count the last feature*/
 
-    // Count the number of points (lines)
+    /* Count the number of points (lines)*/
     char *line = NULL;
     size_t len = 0;
     while (getline(&line, &len, file) != -1)
@@ -387,7 +386,7 @@ int main(int argc, char *argv[])
     }
 
     const char *filename = argv[1];
-    int k = atoi(argv[2]); // Convert k from string to integer
+    int k = atoi(argv[2]); /*Convert k from string to integer*/
 
     int num_points, num_features;
     if (!get_dimensions(filename, &num_points, &num_features))
@@ -403,7 +402,7 @@ int main(int argc, char *argv[])
         return FILE_ERROR;
     }
 
-    // Perform SYMNMF algorithm
+    /*Perform SYMNMF algorithm*/
     double **norm_matrix = normalize_similarity_matrix(num_points, num_features, data_points);
     if (!norm_matrix)
     {
@@ -412,7 +411,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Initialize H matrix with zeros using the existing init_matrix function
+    /* Initialize H matrix with zeros using the existing init_matrix function */
     double **H = init_matrix(num_points, k);
     if (!H)
     {
@@ -434,7 +433,6 @@ int main(int argc, char *argv[])
 
     print_matrix(result_matrix, num_points, k);
 
-    // Clean up
     free_matrix(data_points, num_points);
     free_matrix(norm_matrix, num_points);
     free_matrix(H, num_points);
