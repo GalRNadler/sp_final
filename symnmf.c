@@ -69,9 +69,11 @@ double **read_data_file(const char *file_name, int rows, int cols)
     }
 
     line = NULL;
-    size_t len = 0;
+    size_t len;
     ssize_t read;
-    int row = 0;
+    int row;
+    row = 0;
+    len = 0;
 
     while ((read = getline(&line, &len, file)) != -1 && row < rows)
     {
@@ -169,11 +171,12 @@ double **create_diagonal_matrix(int num_points, int dim, double **points)
 {
     int i;
     double **diag_matrix;
+    double **sim_matrix;
     diag_matrix = init_matrix(num_points, num_points);
     if (!diag_matrix)
         return NULL;
 
-    double **sim_matrix = create_similarity_matrix(num_points, dim, points);
+    sim_matrix = create_similarity_matrix(num_points, dim, points);
     if (!sim_matrix)
     {
         free_matrix(diag_matrix, num_points);
@@ -231,7 +234,7 @@ double **update_H(int k, int num_points, double **norm_matrix, double **H)
     double **H_transpose;
     double **HH_transpose;
     double **HH_transpose_H;
-    H = init_matrix(num_points, k);
+    next_H = init_matrix(num_points, k);
     if (!next_H)
         return NULL;
 
@@ -314,6 +317,7 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
     FILE *file;
     char ch;
     char *line;
+    size_t len;
     file = fopen(filename, "r");
     if (!file)
     {
@@ -343,7 +347,7 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
 
     /* Count the number of points (lines)*/
     line = NULL;
-    size_t len = 0;
+    len = 0;
     while (getline(&line, &len, file) != -1)
     {
         (*num_points)++;
@@ -357,7 +361,8 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
 double **transpose_matrix(double **matrix, int rows, int cols)
 {
     int i, j;
-    double **result = init_matrix(cols, rows);
+    double **result;
+    result = init_matrix(cols, rows);
     if (!result)
         return NULL;
 
@@ -402,6 +407,7 @@ int main(int argc, char *argv[])
     double **norm_matrix;
     double **H;
     double **result_matrix;
+    int k;
 
     if (argc != 3)
     {
@@ -410,7 +416,7 @@ int main(int argc, char *argv[])
     }
 
     filename = argv[1];
-    int k = atoi(argv[2]); /*Convert k from string to integer*/
+    k = atoi(argv[2]); /*Convert k from string to integer*/
 
     int num_points, num_features;
     if (!get_dimensions(filename, &num_points, &num_features))
