@@ -18,7 +18,7 @@ double similarity_measure(const double *vec1, const double *vec2, int size)
 {
     int i;
     double sum = 0.0;
-    for (int i = 0; i < size; i++)
+    for (i = 0; i < size; i++)
     {
         double diff = vec1[i] - vec2[i];
         sum += diff * diff;
@@ -30,7 +30,7 @@ double vector_sum(const double *vec, int size)
 {
     int i;
     double sum = 0.0;
-    for (int i = 0; i < size; i++)
+    for (i = 0; i < size; i++)
     {
         sum += vec[i];
     }
@@ -42,7 +42,7 @@ void free_matrix(double **matrix, int rows)
     int i;
     if (matrix == NULL)
         return;
-    for (int i = 0; i < rows; i++)
+    for (i = 0; i < rows; i++)
     {
         free(matrix[i]);
     }
@@ -101,9 +101,9 @@ double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int
     if (!result)
         return NULL;
 
-    for (int i = 0; i < rows1; i++)
+    for (i = 0; i < rows1; i++)
     {
-        for (int j = 0; j < cols2; j++)
+        for (j = 0; j < cols2; j++)
         {
             for (int k = 0; k < cols1; k++)
             {
@@ -127,13 +127,13 @@ double **init_matrix(int rows, int cols)
         return NULL;
     }
 
-    for (int i = 0; i < rows; i++)
+    for (i = 0; i < rows; i++)
     {
         matrix[i] = calloc(cols, sizeof(double));
         if (!matrix[i])
         {
             fprintf(stderr, "Memory allocation failed\n");
-            for (int j = 0; j < i; j++)
+            for (j = 0; j < i; j++)
             {
                 free(matrix[j]);
             }
@@ -152,7 +152,7 @@ double **create_similarity_matrix(int num_points, int dim, double **points)
     if (!sim_matrix)
         return NULL;
 
-    for (int i = 0; i < num_points; i++)
+    for (i = 0; i < num_points; i++)
     {
         for (int j = i + 1; j < num_points; j++)
         {
@@ -177,7 +177,7 @@ double **create_diagonal_matrix(int num_points, int dim, double **points)
         return NULL;
     }
 
-    for (int i = 0; i < num_points; i++)
+    for (i = 0; i < num_points; i++)
     {
         diag_matrix[i][i] = vector_sum(sim_matrix[i], num_points);
     }
@@ -200,7 +200,7 @@ double **normalize_similarity_matrix(int num_points, int dim, double **points)
     }
 
     // Compute D^(-1/2)
-    for (int i = 0; i < num_points; i++)
+    for (i = 0; i < num_points; i++)
     {
         D[i][i] = 1.0 / sqrt(D[i][i]);
     }
@@ -238,9 +238,9 @@ double **update_H(int k, int num_points, double **norm_matrix, double **H)
         return NULL;
     }
 
-    for (int i = 0; i < num_points; i++)
+    for (i = 0; i < num_points; i++)
     {
-        for (int j = 0; j < k; j++)
+        for (j = 0; j < k; j++)
         {
             double ratio = WH[i][j] / HH_transpose_H[i][j];
             next_H[i][j] = H[i][j] * (BETA * ratio + (1 - BETA));
@@ -259,9 +259,9 @@ int has_converged(int k, int num_points, double **H, double **next_H)
 {
     int i, j;
     double norm = 0.0;
-    for (int i = 0; i < num_points; i++)
+    for (i = 0; i < num_points; i++)
     {
-        for (int j = 0; j < k; j++)
+        for (j = 0; j < k; j++)
         {
             double diff = next_H[i][j] - H[i][j];
             norm += diff * diff;
@@ -278,7 +278,7 @@ double **calculate_symnmf(int k, int num_points, double **norm_matrix, double **
     if (!next_H)
         return NULL;
 
-    for (int iter = 0; iter < MAX_ITER && !has_converged(k, num_points, curr_h, next_H); iter++)
+    for (iter = 0; iter < MAX_ITER && !has_converged(k, num_points, curr_h, next_H); iter++)
     {
         copy_matrix(curr_h, next_H, num_points, k);
         double **temp = update_H(k, num_points, norm_matrix, curr_h);
@@ -344,9 +344,9 @@ double **transpose_matrix(double **matrix, int rows, int cols)
     if (!result)
         return NULL;
 
-    for (int i = 0; i < rows; i++)
+    for (i = 0; i < rows; i++)
     {
-        for (int j = 0; j < cols; j++)
+        for (j = 0; j < cols; j++)
         {
             result[j][i] = matrix[i][j];
         }
@@ -357,7 +357,7 @@ double **transpose_matrix(double **matrix, int rows, int cols)
 void copy_matrix(double **dest, double **src, int rows, int cols)
 {
     int i;
-    for (int i = 0; i < rows; i++)
+    for (i = 0; i < rows; i++)
     {
         memcpy(dest[i], src[i], cols * sizeof(double));
     }
@@ -366,9 +366,9 @@ void copy_matrix(double **dest, double **src, int rows, int cols)
 void print_matrix(double **matrix, int rows, int cols)
 {
     int i;
-    for (int i = 0; i < rows; i++)
+    for (i = 0; i < rows; i++)
     {
-        for (int j = 0; j < cols; j++)
+        for (j = 0; j < cols; j++)
         {
             printf("%.4f", matrix[i][j]);
             if (j < cols - 1)
