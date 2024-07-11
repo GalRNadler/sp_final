@@ -16,6 +16,7 @@
 
 double similarity_measure(const double *vec1, const double *vec2, int size)
 {
+    int i;
     double sum = 0.0;
     for (int i = 0; i < size; i++)
     {
@@ -27,6 +28,7 @@ double similarity_measure(const double *vec1, const double *vec2, int size)
 
 double vector_sum(const double *vec, int size)
 {
+    int i;
     double sum = 0.0;
     for (int i = 0; i < size; i++)
     {
@@ -37,6 +39,7 @@ double vector_sum(const double *vec, int size)
 
 void free_matrix(double **matrix, int rows)
 {
+    int i;
     if (matrix == NULL)
         return;
     for (int i = 0; i < rows; i++)
@@ -93,6 +96,7 @@ double **read_data_file(const char *file_name, int rows, int cols)
 
 double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int cols2)
 {
+    int i, j;
     double **result = init_matrix(rows1, cols2);
     if (!result)
         return NULL;
@@ -115,6 +119,7 @@ double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int
 
 double **init_matrix(int rows, int cols)
 {
+    int i, j;
     double **matrix = malloc(rows * sizeof(double *));
     if (!matrix)
     {
@@ -142,6 +147,7 @@ double **init_matrix(int rows, int cols)
 
 double **create_similarity_matrix(int num_points, int dim, double **points)
 {
+    int i, j;
     double **sim_matrix = init_matrix(num_points, num_points);
     if (!sim_matrix)
         return NULL;
@@ -159,6 +165,7 @@ double **create_similarity_matrix(int num_points, int dim, double **points)
 
 double **create_diagonal_matrix(int num_points, int dim, double **points)
 {
+    int i;
     double **diag_matrix = init_matrix(num_points, num_points);
     if (!diag_matrix)
         return NULL;
@@ -181,6 +188,7 @@ double **create_diagonal_matrix(int num_points, int dim, double **points)
 
 double **normalize_similarity_matrix(int num_points, int dim, double **points)
 {
+    int i;
     // Create similarity and diagonal degree matrices
     double **A = create_similarity_matrix(num_points, dim, points);
     double **D = create_diagonal_matrix(num_points, dim, points);
@@ -210,6 +218,7 @@ double **normalize_similarity_matrix(int num_points, int dim, double **points)
 
 double **update_H(int k, int num_points, double **norm_matrix, double **H)
 {
+    int i, j;
     double **next_H = init_matrix(num_points, k);
     if (!next_H)
         return NULL;
@@ -248,6 +257,7 @@ double **update_H(int k, int num_points, double **norm_matrix, double **H)
 
 int has_converged(int k, int num_points, double **H, double **next_H)
 {
+    int i, j;
     double norm = 0.0;
     for (int i = 0; i < num_points; i++)
     {
@@ -262,6 +272,7 @@ int has_converged(int k, int num_points, double **H, double **next_H)
 
 double **calculate_symnmf(int k, int num_points, double **norm_matrix, double **H)
 {
+    int iter;
     double **curr_h = H;
     double **next_H = update_H(k, num_points, norm_matrix, H);
     if (!next_H)
@@ -328,6 +339,7 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
 
 double **transpose_matrix(double **matrix, int rows, int cols)
 {
+    int i, j;
     double **result = init_matrix(cols, rows);
     if (!result)
         return NULL;
@@ -344,6 +356,7 @@ double **transpose_matrix(double **matrix, int rows, int cols)
 
 void copy_matrix(double **dest, double **src, int rows, int cols)
 {
+    int i;
     for (int i = 0; i < rows; i++)
     {
         memcpy(dest[i], src[i], cols * sizeof(double));
@@ -352,6 +365,7 @@ void copy_matrix(double **dest, double **src, int rows, int cols)
 
 void print_matrix(double **matrix, int rows, int cols)
 {
+    int i;
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
