@@ -54,7 +54,11 @@ double **read_data_file(const char *file_name, int rows, int cols)
     double **data;
     char *line;
     int col;
-    FILE *file = fopen(file_name, "r");
+    size_t len;
+    ssize_t read;
+    int row;
+    FILE *file;
+    file = fopen(file_name, "r");
     if (file == NULL)
     {
         fprintf(stderr, "Error opening file: %s\n", strerror(errno));
@@ -69,9 +73,6 @@ double **read_data_file(const char *file_name, int rows, int cols)
     }
 
     line = NULL;
-    size_t len;
-    ssize_t read;
-    int row;
     row = 0;
     len = 0;
 
@@ -407,7 +408,7 @@ int main(int argc, char *argv[])
     double **norm_matrix;
     double **H;
     double **result_matrix;
-    int k;
+    int k, num_points, num_features;
 
     if (argc != 3)
     {
@@ -417,8 +418,6 @@ int main(int argc, char *argv[])
 
     filename = argv[1];
     k = atoi(argv[2]); /*Convert k from string to integer*/
-
-    int num_points, num_features;
     if (!get_dimensions(filename, &num_points, &num_features))
     {
         fprintf(stderr, "Error reading file dimensions\n");
