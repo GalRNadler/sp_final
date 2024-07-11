@@ -214,10 +214,10 @@ double **update_H(int k, int num_points, double **norm_matrix, double **H)
     if (!next_H)
         return NULL;
 
-    double **WH = multiply(norm_matrix, H, num_points, num_points, k);
+    double **WH = matrix_multiply(norm_matrix, H, num_points, num_points, k);
     double **H_transpose = transpose_matrix(H, k, num_points);
-    double **HH_transpose = multiply(H, H_transpose, num_points, k, num_points);
-    double **HH_transpose_H = multiply(HH_transpose, H, num_points, num_points, k);
+    double **HH_transpose = matrix_multiply(H, H_transpose, num_points, k, num_points);
+    double **HH_transpose_H = matrix_multiply(HH_transpose, H, num_points, num_points, k);
 
     if (!WH || !H_transpose || !HH_transpose || !HH_transpose_H)
     {
