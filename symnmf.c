@@ -154,7 +154,7 @@ double **create_similarity_matrix(int num_points, int dim, double **points)
 
     for (i = 0; i < num_points; i++)
     {
-        for (int j = i + 1; j < num_points; j++)
+        for (j = i + 1; j < num_points; j++)
         {
             sim_matrix[i][j] = sim_matrix[j][i] = similarity_measure(points[i], points[j], dim);
         }
@@ -365,7 +365,7 @@ void copy_matrix(double **dest, double **src, int rows, int cols)
 
 void print_matrix(double **matrix, int rows, int cols)
 {
-    int i;
+    int i, j;
     for (i = 0; i < rows; i++)
     {
         for (j = 0; j < cols; j++)
