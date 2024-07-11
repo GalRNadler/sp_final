@@ -51,6 +51,9 @@ void free_matrix(double **matrix, int rows)
 
 double **read_data_file(const char *file_name, int rows, int cols)
 {
+    double **data;
+    char *line;
+    int col;
     FILE *file = fopen(file_name, "r");
     if (file == NULL)
     {
@@ -58,14 +61,14 @@ double **read_data_file(const char *file_name, int rows, int cols)
         return NULL;
     }
 
-    double **data = init_matrix(rows, cols);
+    data = init_matrix(rows, cols);
     if (data == NULL)
     {
         fclose(file);
         return NULL;
     }
 
-    char *line = NULL;
+    line = NULL;
     size_t len = 0;
     ssize_t read;
     int row = 0;
@@ -73,7 +76,7 @@ double **read_data_file(const char *file_name, int rows, int cols)
     while ((read = getline(&line, &len, file)) != -1 && row < rows)
     {
         char *token = strtok(line, ",");
-        for (int col = 0; col < cols && token != NULL; col++)
+        for (col = 0; col < cols && token != NULL; col++)
         {
             data[row][col] = strtod(token, NULL);
             token = strtok(NULL, ",");
@@ -96,7 +99,7 @@ double **read_data_file(const char *file_name, int rows, int cols)
 
 double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int cols2)
 {
-    int i, j;
+    int i, j, k;
     double **result = init_matrix(rows1, cols2);
     if (!result)
         return NULL;
@@ -105,7 +108,7 @@ double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int
     {
         for (j = 0; j < cols2; j++)
         {
-            for (int k = 0; k < cols1; k++)
+            for (k = 0; k < cols1; k++)
             {
                 result[i][j] += mat1[i][k] * mat2[k][j];
             }
@@ -165,7 +168,8 @@ double **create_similarity_matrix(int num_points, int dim, double **points)
 double **create_diagonal_matrix(int num_points, int dim, double **points)
 {
     int i;
-    double **diag_matrix = init_matrix(num_points, num_points);
+    double **diag_matrix;
+    diag_matrix = init_matrix(num_points, num_points);
     if (!diag_matrix)
         return NULL;
 
@@ -188,9 +192,13 @@ double **create_diagonal_matrix(int num_points, int dim, double **points)
 double **normalize_similarity_matrix(int num_points, int dim, double **points)
 {
     int i;
-    // Create similarity and diagonal degree matrices
-    double **A = create_similarity_matrix(num_points, dim, points);
-    double **D = create_diagonal_matrix(num_points, dim, points);
+    /*Create similarity and diagonal degree matrices*/
+    double **A;
+    double **D;
+    double **DA;
+    double **DAD;
+    A = create_similarity_matrix(num_points, dim, points);
+    D = create_diagonal_matrix(num_points, dim, points);
     if (!A || !D)
     {
         free_matrix(A, num_points);
@@ -205,8 +213,8 @@ double **normalize_similarity_matrix(int num_points, int dim, double **points)
     }
 
     /*Compute normalized similarity matrix: D^(-1/2) * A * D^(-1/2)*/
-    double **DA = matrix_multiply(D, A, num_points, num_points, num_points);
-    double **DAD = matrix_multiply(DA, D, num_points, num_points, num_points);
+    DA = matrix_multiply(D, A, num_points, num_points, num_points);
+    DAD = matrix_multiply(DA, D, num_points, num_points, num_points);
 
     free_matrix(A, num_points);
     free_matrix(D, num_points);
@@ -218,14 +226,19 @@ double **normalize_similarity_matrix(int num_points, int dim, double **points)
 double **update_H(int k, int num_points, double **norm_matrix, double **H)
 {
     int i, j;
-    double **next_H = init_matrix(num_points, k);
+    double **next_H;
+    double **WH;
+    double **H_transpose;
+    double **HH_transpose;
+    double **HH_transpose_H;
+    H = init_matrix(num_points, k);
     if (!next_H)
         return NULL;
 
-    double **WH = matrix_multiply(norm_matrix, H, num_points, num_points, k);
-    double **H_transpose = transpose_matrix(H, k, num_points);
-    double **HH_transpose = matrix_multiply(H, H_transpose, num_points, k, num_points);
-    double **HH_transpose_H = matrix_multiply(HH_transpose, H, num_points, num_points, k);
+    WH = matrix_multiply(norm_matrix, H, num_points, num_points, k);
+    H_transpose = transpose_matrix(H, k, num_points);
+    HH_transpose = matrix_multiply(H, H_transpose, num_points, k, num_points);
+    HH_transpose_H = matrix_multiply(HH_transpose, H, num_points, num_points, k);
 
     if (!WH || !H_transpose || !HH_transpose || !HH_transpose_H)
     {
@@ -272,15 +285,18 @@ int has_converged(int k, int num_points, double **H, double **next_H)
 double **calculate_symnmf(int k, int num_points, double **norm_matrix, double **H)
 {
     int iter;
-    double **curr_h = H;
-    double **next_H = update_H(k, num_points, norm_matrix, H);
+    double **curr_h;
+    double **next_H;
+    double **temp;
+    curr_h = H;
+    next_H = update_H(k, num_points, norm_matrix, H);
     if (!next_H)
         return NULL;
 
     for (iter = 0; iter < MAX_ITER && !has_converged(k, num_points, curr_h, next_H); iter++)
     {
         copy_matrix(curr_h, next_H, num_points, k);
-        double **temp = update_H(k, num_points, norm_matrix, curr_h);
+        temp = update_H(k, num_points, norm_matrix, curr_h);
         if (!temp)
         {
             free_matrix(next_H, num_points);
@@ -295,7 +311,10 @@ double **calculate_symnmf(int k, int num_points, double **norm_matrix, double **
 
 int get_dimensions(const char *filename, int *num_points, int *num_features)
 {
-    FILE *file = fopen(filename, "r");
+    FILE *file;
+    char ch;
+    char *line;
+    file = fopen(filename, "r");
     if (!file)
     {
         perror("Error opening file");
@@ -304,7 +323,6 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
 
     *num_features = 0;
     *num_points = 0;
-    char ch;
 
     /*Check if file is empty*/
     if ((ch = fgetc(file)) == EOF)
@@ -324,7 +342,7 @@ int get_dimensions(const char *filename, int *num_points, int *num_features)
     (*num_features)++; /*Count the last feature*/
 
     /* Count the number of points (lines)*/
-    char *line = NULL;
+    line = NULL;
     size_t len = 0;
     while (getline(&line, &len, file) != -1)
     {
@@ -379,13 +397,19 @@ void print_matrix(double **matrix, int rows, int cols)
 
 int main(int argc, char *argv[])
 {
+    const char *filename;
+    double **data_points;
+    double **norm_matrix;
+    double **H;
+    double **result_matrix;
+
     if (argc != 3)
     {
         fprintf(stderr, "Usage: %s <filename> <k>\n", argv[0]);
         return USAGE_ERROR;
     }
 
-    const char *filename = argv[1];
+    filename = argv[1];
     int k = atoi(argv[2]); /*Convert k from string to integer*/
 
     int num_points, num_features;
@@ -395,7 +419,7 @@ int main(int argc, char *argv[])
         return FILE_ERROR;
     }
 
-    double **data_points = read_data_file(filename, num_points, num_features);
+    data_points = read_data_file(filename, num_points, num_features);
     if (!data_points)
     {
         fprintf(stderr, "Error reading data from file\n");
@@ -403,7 +427,7 @@ int main(int argc, char *argv[])
     }
 
     /*Perform SYMNMF algorithm*/
-    double **norm_matrix = normalize_similarity_matrix(num_points, num_features, data_points);
+    norm_matrix = normalize_similarity_matrix(num_points, num_features, data_points);
     if (!norm_matrix)
     {
         fprintf(stderr, "Error computing normalized similarity matrix\n");
@@ -412,7 +436,7 @@ int main(int argc, char *argv[])
     }
 
     /* Initialize H matrix with zeros using the existing init_matrix function */
-    double **H = init_matrix(num_points, k);
+    H = init_matrix(num_points, k);
     if (!H)
     {
         fprintf(stderr, "Error initializing H matrix\n");
@@ -421,7 +445,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    double **result_matrix = calculate_symnmf(k, num_points, norm_matrix, H);
+    result_matrix = calculate_symnmf(k, num_points, norm_matrix, H);
     if (!result_matrix)
     {
         fprintf(stderr, "Error computing SYMNMF\n");
