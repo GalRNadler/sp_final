@@ -1,7 +1,7 @@
 import sys
 from math import sqrt
 import numpy as np
-import mysymnmf.c
+import mysymnmf
 
 OPTIONS = ["symnmf", "sym", "ddg", "norm"]
 
