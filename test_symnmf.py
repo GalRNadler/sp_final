@@ -28,8 +28,11 @@ def main():
     num_points = int(num_points)
     num_features = int(num_features)
 
+    # Analysis flag (set to 1 to enable analysis)
+    analysis = 1
+
     # Run SYMNMF algorithm
-    result = symnmfmodule.symnmf(k, num_points, num_features, input_matrix_list, H_list)
+    result = symnmfmodule.symnmf(k, num_points, input_matrix_list, H_list, analysis)
 
     # Print the result
     print("Result of SYMNMF:")
