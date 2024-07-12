@@ -418,14 +418,11 @@ int main(int argc, char *argv[])
 
     filename = argv[1];
     k = atoi(argv[2]); /*Convert k from string to integer*/
-    printf("Starting program with filename: %s and k: %d\n", filename, k);
-
     if (!get_dimensions(filename, &num_points, &num_features))
     {
         fprintf(stderr, "Error reading file dimensions\n");
         return FILE_ERROR;
     }
-    printf("File dimensions: %d points, %d features\n", num_points, num_features);
 
     data_points = read_data_file(filename, num_points, num_features);
     if (!data_points)
@@ -433,10 +430,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error reading data from file\n");
         return FILE_ERROR;
     }
-    printf("Data read successfully\n");
 
     /*Perform SYMNMF algorithm*/
-    printf("Computing normalized similarity matrix...\n");
     norm_matrix = normalize_similarity_matrix(num_points, num_features, data_points);
     if (!norm_matrix)
     {
@@ -444,10 +439,8 @@ int main(int argc, char *argv[])
         free_matrix(data_points, num_points);
         return 1;
     }
-    printf("Normalized similarity matrix computed\n");
 
     /* Initialize H matrix with zeros using the existing init_matrix function */
-    printf("Initializing H matrix...\n");
     H = init_matrix(num_points, k);
     if (!H)
     {
@@ -456,9 +449,7 @@ int main(int argc, char *argv[])
         free_matrix(norm_matrix, num_points);
         return 1;
     }
-    printf("H matrix initialized\n");
 
-    printf("Calculating SYMNMF...\n");
     result_matrix = calculate_symnmf(k, num_points, norm_matrix, H);
     if (!result_matrix)
     {
@@ -468,18 +459,13 @@ int main(int argc, char *argv[])
         free_matrix(H, num_points);
         return 1;
     }
-    printf("SYMNMF calculation complete\n");
 
-    printf("Printing result matrix:\n");
     print_matrix(result_matrix, num_points, k);
 
-    printf("Freeing memory...\n");
     free_matrix(data_points, num_points);
     free_matrix(norm_matrix, num_points);
     free_matrix(H, num_points);
     free_matrix(result_matrix, num_points);
-    printf("Memory freed\n");
 
-    printf("Program completed successfully\n");
     return 0;
 }
