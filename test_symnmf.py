@@ -31,6 +31,12 @@ def main():
     # Analysis flag (set to 1 to enable analysis)
     analysis = 1
 
+    # Debugging information
+    print(f"k: {k}, num_points: {num_points}, num_features: {num_features}")
+    print(f"input_matrix_list: {input_matrix_list}")
+    print(f"H_list: {H_list}")
+    print(f"analysis: {analysis}")
+
     # Run SYMNMF algorithm
     result = symnmfmodule.symnmf(k, num_points, input_matrix_list, H_list, analysis)
 
