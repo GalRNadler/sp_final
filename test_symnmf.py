@@ -20,8 +20,8 @@ def main():
     H = np.random.rand(num_points, k)
 
     # Convert numpy arrays to lists of lists
-    input_matrix_list = input_matrix.tolist()
-    H_list = H.tolist()
+    input_matrix_list = [list(row) for row in input_matrix]
+    H_list = [list(row) for row in H]
 
     # Ensure k, num_points, and num_features are integers
     k = int(k)
