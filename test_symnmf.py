@@ -13,7 +13,7 @@ def convert_to_native_float(lst):
 
 def main():
     # Load the small input matrix
-    input_matrix = load_input('small_input.txt')  # Load the correct input file
+    input_matrix = load_input('input_1.txt')  # Load the correct input file
 
     # Assume k = 2 for this small test case
     k = 2
