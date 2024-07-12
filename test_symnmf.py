@@ -9,7 +9,7 @@ def load_input(file_path):
 
 def main():
     # Load the small input matrix
-    input_matrix = load_input('input_1.txt')
+    input_matrix = load_input('small_input.txt')
 
     # Assume k = 2 for this small test case
     k = 2
