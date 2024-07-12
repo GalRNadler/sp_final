@@ -1,9 +1,7 @@
 import sys
 from math import sqrt
 import numpy as np
-#rrrrr
-# import mysymnmf
-import html
+import mysymnmf
 
 OPTIONS = ["symnmf", "sym", "ddg", "norm"]
 
@@ -41,15 +39,15 @@ def init_h(n, k, W):
 
 def logic(datapoints, k, goal, n, d):
     if goal == "symnmf":
-        W = symnmf.norm(0, n, d ,datapoints)
+        W = mysymnmf.norm(0, n, d ,datapoints)
         H = init_h(n, k, W)
-        symnmf.symnmf(k, n, W, H, 0)
+        mysymnmf.symnmf(k, n, W, H, 0)
     elif goal == "sym":
-        symnmf.sym(n, d, datapoints)
+        mysymnmf.sym(n, d, datapoints)
     elif goal == "ddg":
-        symnmf.ddg(n, d, datapoints)
+        mysymnmf.ddg(n, d, datapoints)
     elif goal == "norm":
-        symnmf.norm(1, n, d, datapoints)
+        mysymnmf.norm(1, n, d, datapoints)
     else:
         raise Exception()
 
@@ -58,8 +56,7 @@ def main():
         datapoints, k, goal, n, d = parse_input()
         logic(datapoints, k, goal, n, d)
     except Exception as e:
-        print("An Error Has Occurred")
+        print("1An Error Has Occurred")
 
 if __name__ == "__main__":
     main()
-    
