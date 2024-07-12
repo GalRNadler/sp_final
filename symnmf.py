@@ -39,7 +39,9 @@ def init_h(n, k, W):
 
 def logic(datapoints, k, goal, n, d):
     if goal == "symnmf":
+        print("11")
         W = mysymnmf.norm(0, n, d ,datapoints)
+        print("12")
         H = init_h(n, k, W)
         print("3")
         mysymnmf.symnmf(k, n, W, H, 0)
