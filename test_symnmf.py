@@ -23,6 +23,11 @@ def main():
     input_matrix_list = input_matrix.tolist()
     H_list = H.tolist()
 
+    # Ensure k, num_points, and num_features are integers
+    k = int(k)
+    num_points = int(num_points)
+    num_features = int(num_features)
+
     # Run SYMNMF algorithm
     result = symnmfmodule.symnmf(k, num_points, num_features, input_matrix_list, H_list)
 
