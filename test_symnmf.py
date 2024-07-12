@@ -20,7 +20,7 @@ def main():
     H = np.random.rand(num_points, k)
 
     # Run SYMNMF algorithm
-    result = symnmfmodule.symnmf(k, num_points, input_matrix.tolist(), H.tolist())
+    result = symnmfmodule.symnmf(k, num_points, num_features, input_matrix.tolist(), H.tolist())
 
     # Print the result
     print("Result of SYMNMF:")
