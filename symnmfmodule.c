@@ -184,12 +184,13 @@ static PyObject *norm(PyObject *self, PyObject *args)
 
     if (need_to_print)
     {
-        printf("9")
-            Py_RETURN_NONE;
+        printf("9");
+        Py_RETURN_NONE;
     }
     else
     {
-        printf("10") return py_norm_matrix;
+        printf("10");
+        return py_norm_matrix;
     }
 }
 
