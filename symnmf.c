@@ -100,10 +100,43 @@ double **read_data_file(const char *file_name, int rows, int cols)
     return data;
 }
 
+double **init_matrix(int rows, int cols)
+{
+    int i, j;
+    double **matrix = malloc(rows * sizeof(double *));
+    if (!matrix)
+    {
+        fprintf(stderr, "Memory allocation failed for matrix\n");
+        return NULL;
+    }
+
+    for (i = 0; i < rows; i++)
+    {
+        matrix[i] = malloc(cols * sizeof(double));
+        if (!matrix[i])
+        {
+            for (j = 0; j < i; j++)
+            {
+                free(matrix[j]);
+            }
+            free(matrix);
+            fprintf(stderr, "Memory allocation failed for matrix row %d\n", i);
+            return NULL;
+        }
+
+        for (j = 0; j < cols; j++)
+        {
+            matrix[i][j] = 0.0; // Initialize elements to 0.0
+        }
+    }
+    return matrix;
+}
+
 double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int cols2)
 {
     int i, j, k;
-    double **result = init_matrix(rows1, cols2);
+    double **result;
+    result = init_matrix(rows1, cols2);
     if (!result)
         return NULL;
 
@@ -120,40 +153,11 @@ double **matrix_multiply(double **mat1, double **mat2, int rows1, int cols1, int
     return result;
 }
 
-/*Functions of Project*/
-
-double **init_matrix(int rows, int cols)
-{
-    int i, j;
-    double **matrix = malloc(rows * sizeof(double *));
-    if (!matrix)
-    {
-        fprintf(stderr, "Memory allocation failed\n");
-        return NULL;
-    }
-
-    for (i = 0; i < rows; i++)
-    {
-        matrix[i] = calloc(cols, sizeof(double));
-        if (!matrix[i])
-        {
-            fprintf(stderr, "Memory allocation failed\n");
-            for (j = 0; j < i; j++)
-            {
-                free(matrix[j]);
-            }
-            free(matrix);
-            return NULL;
-        }
-    }
-
-    return matrix;
-}
-
 double **create_similarity_matrix(int num_points, int dim, double **points)
 {
     int i, j;
-    double **sim_matrix = init_matrix(num_points, num_points);
+    double **sim_matrix;
+    sim_matrix = init_matrix(num_points, num_points);
     if (!sim_matrix)
         return NULL;
 
@@ -251,6 +255,7 @@ double **update_H(int k, int num_points, double **norm_matrix, double **H)
         free_matrix(H_transpose, k);
         free_matrix(HH_transpose, num_points);
         free_matrix(HH_transpose_H, num_points);
+        fprintf(stderr, "Memory allocation failed in update_H\n");
         return NULL;
     }
 
@@ -258,6 +263,11 @@ double **update_H(int k, int num_points, double **norm_matrix, double **H)
     {
         for (j = 0; j < k; j++)
         {
+            if (HH_transpose_H[i][j] == 0.0)
+            {
+                printf("an Error divide by 0");
+                return next_H;
+            }
             double ratio = WH[i][j] / HH_transpose_H[i][j];
             next_H[i][j] = H[i][j] * (BETA * ratio + (1 - BETA));
         }
@@ -289,27 +299,26 @@ int has_converged(int k, int num_points, double **H, double **next_H)
 double **calculate_symnmf(int k, int num_points, double **norm_matrix, double **H)
 {
     int iter;
-    double **curr_h;
-    double **next_H;
-    double **temp;
-    curr_h = H;
-    next_H = update_H(k, num_points, norm_matrix, H);
+    double **curr_h = H;
+    double **next_H = update_H(k, num_points, norm_matrix, H);
     if (!next_H)
+    {
+        fprintf(stderr, "Memory allocation failed in initial update_H\n");
         return NULL;
+    }
 
     for (iter = 0; iter < MAX_ITER && !has_converged(k, num_points, curr_h, next_H); iter++)
     {
         copy_matrix(curr_h, next_H, num_points, k);
-        temp = update_H(k, num_points, norm_matrix, curr_h);
+        double **temp = update_H(k, num_points, norm_matrix, curr_h);
         if (!temp)
         {
             free_matrix(next_H, num_points);
+            fprintf(stderr, "Memory allocation failed in update_H at iteration %d\n", iter);
             return NULL;
         }
-        free_matrix(next_H, num_points);
         next_H = temp;
     }
-
     return next_H;
 }
 
