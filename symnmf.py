@@ -41,13 +41,21 @@ def logic(datapoints, k, goal, n, d):
     if goal == "symnmf":
         W = mysymnmf.norm(0, n, d ,datapoints)
         H = init_h(n, k, W)
+        print("3")
         mysymnmf.symnmf(k, n, W, H, 0)
+        print("4")
     elif goal == "sym":
+        print("5")
         mysymnmf.sym(n, d, datapoints)
+        print("6")
     elif goal == "ddg":
+        print("7")
         mysymnmf.ddg(n, d, datapoints)
+        print("8")
     elif goal == "norm":
+        print("9")
         mysymnmf.norm(1, n, d, datapoints)
+        print("10")
     else:
         raise Exception()
 
