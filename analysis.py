@@ -2,6 +2,7 @@ import sys
 from math import sqrt
 from sklearn.metrics import silhouette_score
 import numpy as np
+import mysymnmf
 
 def euclidean_distance(vec1, vec2):
     d = 0
@@ -23,7 +24,7 @@ def init_vector_list(input_data):
         for line in vectors_file:
             vector = line.strip()
             if vector:
-                vectors.append(tuple(float(point) for point in vector.split(",")))
+                vectors.append(list(float(point) for point in vector.split(",")))
     return vectors
 
 def parse_input():
@@ -62,20 +63,31 @@ def calculate_updated_centroid(centroid_vectors, d):
 
 def assign_to_closest_centroid(datapoints, k_centroids, vectors_mapping):
     for curr_vect in datapoints:
-        closest_centroid = find_closest_centroid(curr_vect, k_centroids)
-        prev_centroid = vectors_mapping[curr_vect]  # find prev mapping
+        curr_vect_tuple = tuple(curr_vect)
+        closest_centroid = find_closest_centroid(curr_vect_tuple, k_centroids)
+        prev_centroid = vectors_mapping[curr_vect_tuple]  # find prev mapping
         if closest_centroid != prev_centroid:
             if prev_centroid is not None:
                 k_centroids[prev_centroid].remove(curr_vect)  # remove the curr from the prev centroid
-            vectors_mapping[curr_vect] = closest_centroid  # add to new mapping
+            vectors_mapping[curr_vect_tuple] = closest_centroid  # add to new mapping
             k_centroids[closest_centroid].append(curr_vect)  # add the curr to its closest centroid
 
+
+def convert_centroids_to_labels(datapoints, k_means_centroids):
+    labels = []
+    centroid_map = {centroid: i for i, centroid in enumerate(k_means_centroids)}
+    for point in datapoints:
+        for centroid, points in k_means_centroids.items():
+            if point in points:
+                labels.append(centroid_map[centroid])
+                break
+    return labels
 
 def k_means(k, d, datapoints):
     e = 0.0001
     max_iter = 300
-    k_centroids = {datapoints[i]: [datapoints[i]] for i in range(k)}
-    vectors_mapping = {vector: vector if vector in k_centroids.keys() else None for vector in datapoints}
+    k_centroids = {tuple(datapoints[i]): [datapoints[i]] for i in range(k)}
+    vectors_mapping = {tuple(vector): tuple(vector) if tuple(vector) in k_centroids.keys() else None for vector in datapoints}
     i = 0
     delta_miu = float("inf")
     while delta_miu >= e or i < max_iter:
@@ -85,13 +97,13 @@ def k_means(k, d, datapoints):
             updated_centroid = calculate_updated_centroid(k_centroids[curr_centroid], d)
             new_k_centroids[updated_centroid] = k_centroids[curr_centroid]  # change to new centroid
             for vector in new_k_centroids[updated_centroid]:
-                vectors_mapping[vector] = updated_centroid
+                vectors_mapping[tuple(vector)] = updated_centroid
             delta_miu = min(euclidean_distance(curr_centroid, updated_centroid), delta_miu)
         k_centroids = new_k_centroids
 
         i += 1
 
-    return k_centroids
+    return convert_centroids_to_labels(datapoints, k_centroids)
 
 def init_h(n, k, W):
     np.random.seed(0)
@@ -103,9 +115,8 @@ def init_h(n, k, W):
 def main():
     try:
         k, datapoints, n, d = parse_input()
-        k_means_centroids = k_means(k, d, datapoints)
-        kmeans_silhouette = format(silhouette_score(datapoints, k_means_centroids), '.4f')
-    
+        k_means_labels = k_means(k, d, datapoints)
+        kmeans_silhouette = format(silhouette_score(datapoints, k_means_labels), '.4f')
         W = mysymnmf.norm(0, n, d, datapoints)
         H = init_h(n, k, W)
         symNMF = mysymnmf.symnmf(k, n, W, H, 1)

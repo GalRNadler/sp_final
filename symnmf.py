@@ -17,7 +17,7 @@ def init_vector_list(input_data):
         for line in vectors_file:
             vector = line.strip()
             if vector:
-                vectors.append(tuple(float(point) for point in vector.split(",")))
+                vectors.append(list(float(point) for point in vector.split(",")))
     return vectors
 
 def parse_input():
@@ -40,7 +40,7 @@ def init_h(n, k, W):
 def logic(datapoints, k, goal, n, d):
     if goal == "symnmf":
         W = mysymnmf.norm(0, n, d ,datapoints)
-        H = init_h(datapoints, k, W)
+        H = init_h(n, k, W)
         mysymnmf.symnmf(k, n, W, H, 0)
     elif goal == "sym":
         mysymnmf.sym(n, d, datapoints)
@@ -55,7 +55,7 @@ def main():
     try:
         datapoints, k, goal, n, d = parse_input()
         logic(datapoints, k, goal, n, d)
-    except:
+    except Exception as e:
         print("An Error Has Occurred")
 
 if __name__ == "__main__":
