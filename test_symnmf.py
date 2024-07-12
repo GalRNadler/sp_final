@@ -4,7 +4,7 @@ import numpy as np
 def load_input(file_path):
     with open(file_path, 'r') as f:
         lines = f.readlines()
-        data = [list(map(float, line.split())) for line in lines]
+        data = [list(map(float, line.strip().split(','))) for line in lines]
     return np.array(data)
 
 def main():
