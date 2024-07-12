@@ -19,8 +19,12 @@ def main():
     # Initialize H matrix with random values
     H = np.random.rand(num_points, k)
 
+    # Convert numpy arrays to lists of lists
+    input_matrix_list = input_matrix.tolist()
+    H_list = H.tolist()
+
     # Run SYMNMF algorithm
-    result = symnmfmodule.symnmf(k, num_points, num_features, input_matrix.tolist(), H.tolist())
+    result = symnmfmodule.symnmf(k, num_points, num_features, input_matrix_list, H_list)
 
     # Print the result
     print("Result of SYMNMF:")
