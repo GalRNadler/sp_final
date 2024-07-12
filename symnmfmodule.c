@@ -110,6 +110,7 @@ static PyObject *sym(PyObject *self, PyObject *args)
 
 static PyObject *ddg(PyObject *self, PyObject *args)
 {
+
     int num, size;
     PyObject *X;
 
@@ -139,34 +140,39 @@ static PyObject *ddg(PyObject *self, PyObject *args)
 
 static PyObject *norm(PyObject *self, PyObject *args)
 {
-    int num, size, need_to_print;
+    printf("1") int num, size, need_to_print;
     PyObject *X;
 
     if (!PyArg_ParseTuple(args, "iiiO", &need_to_print, &num, &size, &X))
     {
-        return NULL;
+        printf("2") return NULL;
     }
 
     double **vectors = parse_matrix(X, num, size);
     if (!vectors)
-        return NULL;
-
+    {
+        printf("3") return NULL;
+    }
     double **norm_matrix = normalize_similarity_matrix(num, size, vectors);
     if (!norm_matrix)
     {
-        free_matrix(vectors, num);
-        PyErr_SetString(PyExc_RuntimeError, "Failed to normalize similarity matrix");
-        return NULL;
+        printf("4")
+            free_matrix(vectors, num);
+        printf("5")
+            PyErr_SetString(PyExc_RuntimeError, "Failed to normalize similarity matrix");
+        printf("6") return NULL;
     }
 
     PyObject *py_norm_matrix = NULL;
     if (need_to_print)
     {
-        print_matrix(norm_matrix, num, num);
+        printf("7")
+            print_matrix(norm_matrix, num, num);
     }
     else
     {
-        py_norm_matrix = build_python_matrix(norm_matrix, num, num);
+        printf("8")
+            py_norm_matrix = build_python_matrix(norm_matrix, num, num);
     }
 
     free_matrix(vectors, num);
@@ -174,11 +180,12 @@ static PyObject *norm(PyObject *self, PyObject *args)
 
     if (need_to_print)
     {
-        Py_RETURN_NONE;
+        printf("9")
+            Py_RETURN_NONE;
     }
     else
     {
-        return py_norm_matrix;
+        printf("10") return py_norm_matrix;
     }
 }
 
