@@ -34,7 +34,7 @@ def logic(datapoints, k, goal):
     vNum = len(datapoints)
     vSize = len(datapoints[0])
     if goal == "symnmf":
-        needToPrintNorm = 0;
+        needToPrintNorm = 0
         W = mysymnmf.norm(needToPrintNorm, vNum, vSize ,datapoints)
         H = initilize_H(datapoints, k, W)
         res = mysymnmf.symnmf(k, vNum, W, H, 0)
