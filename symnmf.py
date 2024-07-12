@@ -39,33 +39,33 @@ def init_h(n, k, W):
 
 def logic(datapoints, k, goal, n, d):
     if goal == "symnmf":
-        print("11")
+        # print("11")
         W = mysymnmf.norm(0, n, d ,datapoints)
-        print("12")
+        # print("12")
         H = init_h(n, k, W)
-        print("3")
+        # print("3")
         mysymnmf.symnmf(k, n, W, H, 0)
-        print("4")
+        # print("4")
     elif goal == "sym":
-        print("5")
+        # print("5")
         mysymnmf.sym(n, d, datapoints)
-        print("6")
+        # print("6")
     elif goal == "ddg":
-        print("7")
+        # print("7")
         mysymnmf.ddg(n, d, datapoints)
-        print("8")
+        # print("8")
     elif goal == "norm":
-        print("9")
+        # print("9")
         mysymnmf.norm(1, n, d, datapoints)
-        print("10")
+        # print("10")
     else:
         raise Exception()
 
 def main():
     try:
-        print("1")
+        # print("1")
         datapoints, k, goal, n, d = parse_input()
-        print("2")
+        # print("2")
         logic(datapoints, k, goal, n, d)
     except Exception as e:
         print("An Error Has Occurred")
