@@ -4,12 +4,16 @@ import numpy as np
 def load_input(file_path):
     with open(file_path, 'r') as f:
         lines = f.readlines()
-        data = [list(map(float, line.strip().split(','))) for line in lines]
+        data = [list(map(float, line.strip().split())) for line in lines]  # Use space as the delimiter
     return np.array(data)
+
+def convert_to_native_float(lst):
+    """Convert numpy float elements to native Python float."""
+    return [[float(element) for element in row] for row in lst]
 
 def main():
     # Load the small input matrix
-    input_matrix = load_input('small_input.txt')
+    input_matrix = load_input('small_input.txt')  # Load the correct input file
 
     # Assume k = 2 for this small test case
     k = 2
@@ -19,9 +23,9 @@ def main():
     # Initialize H matrix with random values
     H = np.random.rand(num_points, k)
 
-    # Convert numpy arrays to lists of lists
-    input_matrix_list = [list(row) for row in input_matrix]
-    H_list = [list(row) for row in H]
+    # Convert numpy arrays to lists of lists with native Python floats
+    input_matrix_list = convert_to_native_float(input_matrix.tolist())
+    H_list = convert_to_native_float(H.tolist())
 
     # Ensure k, num_points, and num_features are integers
     k = int(k)
