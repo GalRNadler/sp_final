@@ -1,4 +1,4 @@
-import symnmfmodule
+import mysymnmf
 import numpy as np
 
 def load_input(file_path):
