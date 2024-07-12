@@ -37,13 +37,23 @@ def main():
     print(f"H_list: {H_list}")
     print(f"analysis: {analysis}")
 
-    # Run SYMNMF algorithm
-    result = symnmfmodule.symnmf(k, num_points, input_matrix_list, H_list, analysis)
+    # Verify types of all arguments
+    print(f"type(k): {type(k)}, type(num_points): {type(num_points)}, type(num_features): {type(num_features)}")
+    print(f"type(input_matrix_list): {type(input_matrix_list)}, type(H_list): {type(H_list)}, type(analysis): {type(analysis)}")
 
-    # Print the result
-    print("Result of SYMNMF:")
-    for row in result:
-        print(row)
+    # Check elements inside the list
+    print(f"type(input_matrix_list[0]): {type(input_matrix_list[0])}, type(input_matrix_list[0][0]): {type(input_matrix_list[0][0])}")
+    print(f"type(H_list[0]): {type(H_list[0])}, type(H_list[0][0]): {type(H_list[0][0])}")
+
+    # Run SYMNMF algorithm
+    try:
+        result = symnmfmodule.symnmf(k, num_points, input_matrix_list, H_list, analysis)
+        # Print the result
+        print("Result of SYMNMF:")
+        for row in result:
+            print(row)
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     main()
