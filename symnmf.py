@@ -53,10 +53,12 @@ def logic(datapoints, k, goal, n, d):
 
 def main():
     try:
+        print("1")
         datapoints, k, goal, n, d = parse_input()
+        print("2")
         logic(datapoints, k, goal, n, d)
     except Exception as e:
-        print("1An Error Has Occurred")
+        print("An Error Has Occurred")
 
 if __name__ == "__main__":
     main()
