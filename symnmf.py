@@ -23,10 +23,10 @@ def parse_input():
     goal = sys.argv[2]
     input_data = sys.argv[3]
 
-    datapoints = init_vector_list(input_data)
-    n = len(datapoints)
-    d = len(datapoints[0])
-    return datapoints, k, goal, n, d
+    d_points = init_vector_list(input_data)
+    n = len(d_points)
+    d = len(d_points[0])
+    return d_points, k, goal, n, d
 
 def init_h(n, k, W):
     np.random.seed(0)
@@ -35,24 +35,24 @@ def init_h(n, k, W):
     H = np.random.uniform(0, high=constant_term, size=(n, k))
     return H.tolist()
 
-def logic(datapoints, k, goal, n, d):
+def logic(d_points, k, goal, n, d):
     if goal == "symnmf":
-        W = symnmfmodule.norm(0, n, d ,datapoints)
+        W = symnmfmodule.norm(0, n, d ,d_points)
         H = init_h(n, k, W)
         symnmfmodule.symnmf(k, n, W, H, 0)
-    elif goal == "sym":
-        symnmfmodule.sym(n, d, datapoints)
-    elif goal == "ddg":
-        symnmfmodule.ddg(n, d, datapoints)
-    elif goal == "norm":
-        symnmfmodule.norm(1, n, d, datapoints)
+    elif goal == "similarity_matrix":
+        symnmfmodule.similarity_matrix(n, d, d_points)
+    elif goal == "diagonal_matrix":
+        symnmfmodule.diagonal_matrix(n, d, d_points)
+    elif goal == "norm_matrix":
+        symnmfmodule.norm_matrix(1, n, d, d_points)
     else:
         raise Exception()
 
 def main():
     try:
-        datapoints, k, goal, n, d = parse_input()
-        logic(datapoints, k, goal, n, d)
+        d_points, k, goal, n, d = parse_input()
+        logic(d_points, k, goal, n, d)
     except Exception as e:
         print("An Error Has Occurred")
 
