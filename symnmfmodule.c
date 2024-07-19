@@ -5,245 +5,151 @@
 #include <math.h>
 #include "symnmf.h"
 
-static double **parseMatrix(PyObject *X, int rows, int cols)
+double **parseMatrix(PyObject *X, int vNum, int vSize)
 {
-    double **matrix = (double **)malloc(rows * sizeof(double *));
-    if (!matrix)
+    double **vectors = (double **)malloc((vNum * sizeof(double *)));
+    if (vectors == NULL)
     {
-        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for matrix");
-        return NULL;
+        fprintf(stderr, "An Error Has Occurred\n");
+        exit(EXIT_FAILURE);
+        int i, j;
     }
 
-    for (int i = 0; i < rows; ++i)
+    for (i = 0; i < vNum; ++i)
     {
-        matrix[i] = (double *)malloc(cols * sizeof(double));
-        if (!matrix[i])
+        vectors[i] = (double *)malloc(vSize * sizeof(double));
+        if (vectors[i] == NULL)
         {
-            for (int j = 0; j < i; ++j)
-            {
-                free(matrix[j]);
-            }
-            free(matrix);
-            PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for matrix row");
-            return NULL;
+            fprintf(stderr, "An Error Has Occurred\n");
+            exit(EXIT_FAILURE);
         }
-
-        PyObject *row = PyList_GetItem(X, i);
-        for (int j = 0; j < cols; ++j)
+        for (j = 0; j < vSize; ++j)
         {
-            matrix[i][j] = PyFloat_AsDouble(PyList_GetItem(row, j));
-            if (PyErr_Occurred())
-            {
-                for (int k = 0; k <= i; ++k)
-                {
-                    free(matrix[k]);
-                }
-                free(matrix);
-                return NULL;
-            }
+            vectors[i][j] = PyFloat_AsDouble(PyList_GetItem(PyList_GetItem(X, i), j));
         }
     }
-    return matrix;
+    return vectors;
 }
 
-static PyObject *buildMatrixForPython(double **matrix, int rows, int cols)
+PyObject *buildMatrixForPython(double **matrix, int rows, int cols)
 {
-    PyObject *py_matrix = PyList_New(rows);
-    if (!py_matrix)
-        return NULL;
-
-    for (int i = 0; i < rows; ++i)
+    PyObject *res_matrix = PyList_New(rows);
+    int i, j;
+    for (i = 0; i < rows; ++i)
     {
-        PyObject *row = PyList_New(cols);
-        if (!row)
+        PyObject *vector = PyList_New(cols);
+        for (j = 0; j < cols; ++j)
         {
-            Py_DECREF(py_matrix);
-            return NULL;
+            PyList_SetItem(vector, j, PyFloat_FromDouble(matrix[i][j]));
         }
-
-        for (int j = 0; j < cols; ++j)
-        {
-            PyObject *val = PyFloat_FromDouble(matrix[i][j]);
-            if (!val)
-            {
-                Py_DECREF(row);
-                Py_DECREF(py_matrix);
-                return NULL;
-            }
-            PyList_SET_ITEM(row, j, val);
-        }
-        PyList_SET_ITEM(py_matrix, i, row);
+        PyList_SetItem(res_matrix, i, vector);
     }
-    return py_matrix;
+    return res_matrix;
 }
 
 static PyObject *sym(PyObject *self, PyObject *args)
 {
-    int num, size;
+    int vNum, vSize;
     PyObject *X;
 
-    if (!PyArg_ParseTuple(args, "iiO", &num, &size, &X))
+    if (!PyArg_ParseTuple(args, "iiO", &vNum, &vSize, &X))
     {
         return NULL;
     }
 
-    double **vectors = parseMatrix(X, num, size);
-    if (!vectors)
-        return NULL;
+    double **vectors = parseMatrix(X, vNum, vSize);
 
-    double **sym_matrix = calc_similarity_matrix(num, size, vectors);
-    if (!sym_matrix)
-    {
-        free_matrix_memory(vectors, num);
-        PyErr_SetString(PyExc_RuntimeError, "Failed to create similarity matrix");
-        return NULL;
-    }
+    /* calc final centroids using kmeans class's method */
+    double **sym_matrix = similarityMatrix(vNum, vSize, vectors);
+    printTheFormat(sym_matrix, vNum, vNum);
+    freeFuncMem(sym_matrix, vNum);
 
-    print_matrix(sym_matrix, num, num);
-    free_matrix_memory(vectors, num);
-    free_matrix_memory(sym_matrix, num);
-
-    Py_RETURN_NONE;
+    return Py_BuildValue("");
 }
 
 static PyObject *ddg(PyObject *self, PyObject *args)
 {
-    int num, size;
+    int vNum, vSize;
     PyObject *X;
 
-    if (!PyArg_ParseTuple(args, "iiO", &num, &size, &X))
+    if (!PyArg_ParseTuple(args, "iiO", &vNum, &vSize, &X))
     {
         return NULL;
     }
 
-    double **vectors = parseMatrix(X, num, size);
-    if (!vectors)
-        return NULL;
+    double **vectors = parseMatrix(X, vNum, vSize);
+    double **ddg_matrix = diagonalMatrix(vNum, vSize, vectors);
+    printTheFormat(ddg_matrix, vNum, vNum);
+    freeFuncMem(ddg_matrix, vNum);
 
-    double **ddg_matrix = calc_diagonal_matrix(num, size, vectors);
-    if (!ddg_matrix)
-    {
-        free_matrix_memory(vectors, num);
-        PyErr_SetString(PyExc_RuntimeError, "Failed to create diagonal matrix");
-        return NULL;
-    }
-
-    print_matrix(ddg_matrix, num, num);
-    free_matrix_memory(vectors, num);
-    free_matrix_memory(ddg_matrix, num);
-
-    Py_RETURN_NONE;
+    return Py_BuildValue("");
 }
 
 static PyObject *norm(PyObject *self, PyObject *args)
 {
-    int num, size, need_to_print;
+    int vNum, vSize, needToPrint;
     PyObject *X;
 
-    if (!PyArg_ParseTuple(args, "iiiO", &need_to_print, &num, &size, &X))
+    if (!PyArg_ParseTuple(args, "iiiO", &needToPrint, &vNum, &vSize, &X))
     {
         return NULL;
     }
 
-    double **vectors = parseMatrix(X, num, size);
-    if (!vectors)
-        return NULL;
-
-    double **norm_matrix = calc_normalized_similarity_matrix(num, size, vectors);
-    if (!norm_matrix)
+    double **vectors = parseMatrix(X, vNum, vSize);
+    double **norm_matrix = normalizedSimilarityMatrix(vNum, vSize, vectors);
+    PyObject *norm_python_matrix = buildMatrixForPython(norm_matrix, vNum, vNum);
+    if (needToPrint)
     {
-        free_matrix_memory(vectors, num);
-        PyErr_SetString(PyExc_RuntimeError, "Failed to normalize similarity matrix");
-        return NULL;
+        printTheFormat(norm_matrix, vNum, vNum);
     }
-
-    PyObject *py_norm_matrix = NULL;
-    if (need_to_print)
-    {
-        print_matrix(norm_matrix, num, num);
-    }
-    else
-    {
-        py_norm_matrix = buildMatrixForPython(norm_matrix, num, num);
-    }
-
-    free_matrix_memory(vectors, num);
-    free_matrix_memory(norm_matrix, num);
-
-    if (need_to_print)
-    {
-        Py_RETURN_NONE;
-    }
-    else
-    {
-        return py_norm_matrix;
-    }
+    freeFuncMem(norm_matrix, vNum);
+    return Py_BuildValue("O", norm_python_matrix);
 }
 
 static PyObject *symnmf(PyObject *self, PyObject *args)
 {
-    int num, k, analysis;
-    PyObject *H, *W;
+    int vNum, k, analysis;
+    PyObject *H;
+    PyObject *W;
 
-    if (!PyArg_ParseTuple(args, "iiOOi", &k, &num, &W, &H, &analysis))
+    if (!PyArg_ParseTuple(args, "iiOOi", &k, &vNum, &W, &H, &analysis))
     {
         return NULL;
     }
 
-    double **H_matrix = parseMatrix(H, num, k);
-    if (!H_matrix)
-        return NULL;
-
-    double **norm_matrix = parseMatrix(W, num, num);
-    if (!norm_matrix)
+    double **H_matrix = parseMatrix(H, vNum, k);
+    double **norm_matrix = parseMatrix(W, vNum, vNum);
+    double **symnmf_matrix = calcSymnmf(k, vNum, norm_matrix, H_matrix);
+    if (!analysis)
     {
-        free_matrix_memory(H_matrix, num);
-        return NULL;
-    }
-
-    double **symnmf_matrix = calc_symnmf(k, num, norm_matrix, H_matrix);
-    if (!symnmf_matrix)
-    {
-        free_matrix_memory(H_matrix, num);
-        free_matrix_memory(norm_matrix, num);
-        PyErr_SetString(PyExc_RuntimeError, "Failed to calculate SYMNMF");
-        return NULL;
-    }
-
-    PyObject *result = NULL;
-    if (analysis)
-    {
-        result = buildMatrixForPython(symnmf_matrix, num, k);
+        printTheFormat(symnmf_matrix, vNum, k);
+        freeFuncMem(symnmf_matrix, vNum);
+        return Py_BuildValue("");
     }
     else
     {
-        print_matrix(symnmf_matrix, num, k);
-        Py_INCREF(Py_None);
-        result = Py_None;
+        PyObject *analyse_matrix = buildMatrixForPython(symnmf_matrix, vNum, k);
+        freeFuncMem(symnmf_matrix, vNum);
+        return Py_BuildValue("O", analyse_matrix);
     }
-
-    free_matrix_memory(H_matrix, num);
-    free_matrix_memory(norm_matrix, num);
-    free_matrix_memory(symnmf_matrix, num);
-
-    return result;
 }
 
-static PyMethodDef symnmf_methods[] = {
-    {"sym", (PyCFunction)sym, METH_VARARGS, "Compute similarity matrix"},
-    {"ddg", (PyCFunction)ddg, METH_VARARGS, "Compute diagonal degree matrix"},
-    {"norm", (PyCFunction)norm, METH_VARARGS, "Compute normalized similarity matrix"},
-    {"symnmf", (PyCFunction)symnmf, METH_VARARGS, "Perform SYMNMF algorithm"},
-    {NULL, NULL, 0, NULL}};
+static PyMethodDef symnmfMethods[] = {
+    {"sym", (PyCFunction)sym, METH_VARARGS, PyDoc_STR("sym algo")},
+    {"ddg", (PyCFunction)ddg, METH_VARARGS, PyDoc_STR("ddg algo")},
+    {"norm", (PyCFunction)norm, METH_VARARGS, PyDoc_STR("norm algo")},
+    {"symnmf", (PyCFunction)symnmf, METH_VARARGS, PyDoc_STR("full algo")},
+    {NULL, NULL, 0, NULL} // Sentinel
+};
 
-static struct PyModuleDef moduledef = {
+static struct PyModuleDef moduleDef = {
     PyModuleDef_HEAD_INIT,
     "mysymnmf",
-    "A Python module for SYMNMF algorithm",
+    "A Python module for few algo",
     -1,
-    symnmf_methods};
+    symnmfMethods};
 
 PyMODINIT_FUNC PyInit_mysymnmf(void)
 {
-    return PyModule_Create(&moduledef);
+    return PyModule_Create(&moduleDef);
 }
