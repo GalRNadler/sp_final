@@ -2,7 +2,9 @@ import sys
 from math import sqrt
 from sklearn.metrics import silhouette_score
 import numpy as np
-import mysymnmf
+import symnmfmodule
+
+np.random.seed(0)
 
 def euclidean_distance(vec1, vec2):
     d = 0
@@ -63,7 +65,7 @@ def calculate_updated_centroid(centroid_vectors, d):
 
 def assign_to_closest_centroid(datapoints, k_centroids, vectors_mapping):
     for curr_vect in datapoints:
-        curr_vect_tuple = tuple(curr_vect)
+        curr_vect_tuple = tuple(curr_vect)  # Convert the current vector to a tuple
         closest_centroid = find_closest_centroid(curr_vect_tuple, k_centroids)
         prev_centroid = vectors_mapping[curr_vect_tuple]  # find prev mapping
         if closest_centroid != prev_centroid:
@@ -106,7 +108,6 @@ def k_means(k, d, datapoints):
     return convert_centroids_to_labels(datapoints, k_centroids)
 
 def init_h(n, k, W):
-    np.random.seed(0)
     mean_w = np.mean(W)
     constant_term = 2 * sqrt(mean_w / k)
     H = np.random.uniform(0, high=constant_term, size=(n, k))
@@ -116,19 +117,17 @@ def main():
     try:
         k, datapoints, n, d = parse_input()
         k_means_labels = k_means(k, d, datapoints)
-        kmeans_silhouette = format(silhouette_score(datapoints, k_means_labels), '.4f')
-        W = mysymnmf.norm(0, n, d, datapoints)
+        
+        W = symnmfmodule.norm(0, n, d, datapoints)
         H = init_h(n, k, W)
-        symNMF = mysymnmf.symnmf(k, n, W, H, 1)
-        sym_labels = np.argmax(symNMF, axis=1)
-        nmf_silhouette = format(silhouette_score(datapoints, sym_labels), '.4f')
-
-        final_calc = "nmf: {0}\nkmeans: {1}".format(nmf_silhouette, kmeans_silhouette)
-        print(final_calc)
+        symNMF = np.array(symnmfmodule.symnmf(k, n, W, H, 1))
+        sym_labels = symNMF.argmax(axis=1)
     
-    except:
+        print("nmf: %.4f" % silhouette_score(datapoints, sym_labels))
+        print("kmeans: %.4f" % silhouette_score(datapoints, k_means_labels))
+    
+    except Exception:
         print("An Error Has Occurred")
-
 
 if __name__ == "__main__":
     main()

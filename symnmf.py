@@ -1,9 +1,7 @@
 import sys
 from math import sqrt
 import numpy as np
-import mysymnmf
-
-OPTIONS = ["symnmf", "sym", "ddg", "norm"]
+import symnmfmodule
 
 def to_number(num):
     try:
@@ -25,10 +23,10 @@ def parse_input():
     goal = sys.argv[2]
     input_data = sys.argv[3]
 
-    datapoints = init_vector_list(input_data)
-    n = len(datapoints)
-    d = len(datapoints[0])
-    return datapoints, k, goal, n, d
+    d_points = init_vector_list(input_data)
+    n = len(d_points)
+    d = len(d_points[0])
+    return d_points, k, goal, n, d
 
 def init_h(n, k, W):
     np.random.seed(0)
@@ -37,36 +35,24 @@ def init_h(n, k, W):
     H = np.random.uniform(0, high=constant_term, size=(n, k))
     return H.tolist()
 
-def logic(datapoints, k, goal, n, d):
+def logic(d_points, k, goal, n, d):
     if goal == "symnmf":
-        # print("11")
-        W = mysymnmf.norm(0, n, d ,datapoints)
-        # print("12")
+        W = symnmfmodule.norm(0, n, d ,d_points)
         H = init_h(n, k, W)
-        # print("3")
-        mysymnmf.symnmf(k, n, W, H, 0)
-        # print("4")
-    elif goal == "sym":
-        # print("5")
-        mysymnmf.sym(n, d, datapoints)
-        # print("6")
-    elif goal == "ddg":
-        # print("7")
-        mysymnmf.ddg(n, d, datapoints)
-        # print("8")
-    elif goal == "norm":
-        # print("9")
-        mysymnmf.norm(1, n, d, datapoints)
-        # print("10")
+        symnmfmodule.symnmf(k, n, W, H, 0)
+    elif goal == "similarity_matrix":
+        symnmfmodule.similarity_matrix(n, d, d_points)
+    elif goal == "diagonal_matrix":
+        symnmfmodule.diagonal_matrix(n, d, d_points)
+    elif goal == "norm_matrix":
+        symnmfmodule.norm_matrix(1, n, d, d_points)
     else:
         raise Exception()
 
 def main():
     try:
-        # print("1")
-        datapoints, k, goal, n, d = parse_input()
-        # print("2")
-        logic(datapoints, k, goal, n, d)
+        d_points, k, goal, n, d = parse_input()
+        logic(d_points, k, goal, n, d)
     except Exception as e:
         print("An Error Has Occurred")
 
