@@ -141,19 +141,17 @@ static PyObject *norm_matrix(PyObject *self, PyObject *args)
 {
     int vec_number, vec_dim, need_to_print;
     PyObject *X;
-    double **vectors;
-    double **norm_matrix;
 
     if (!PyArg_ParseTuple(args, "iiiO", &need_to_print, &vec_number, &vec_dim, &X))
     {
         return NULL;
     }
 
-    **vectors = matrix_parse(X, vec_number, vec_dim);
+    double **vectors = matrix_parse(X, vec_number, vec_dim);
     if (!vectors)
         return NULL;
 
-    **norm_matrix = calc_normalized_similarity_matrix(vec_number, vec_dim, vectors);
+    double **norm_matrix = calc_normalized_similarity_matrix(vec_number, vec_dim, vectors);
     if (!norm_matrix)
     {
         free_matrix_memory(vectors, vec_number);
