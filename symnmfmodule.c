@@ -234,9 +234,9 @@ static PyObject *symnmf(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef symnmf_methods[] = {
-    {"similarity_matrix", (PyCFunction)sym, METH_VARARGS, "Compute similarity matrix"},
-    {"diagonal_matrix", (PyCFunction)ddg, METH_VARARGS, "Compute diagonal degree matrix"},
-    {"norm_matrix", (PyCFunction)norm, METH_VARARGS, "Compute normalized similarity matrix"},
+    {"similarity_matrix", (PyCFunction)similarity_matrix, METH_VARARGS, "Compute similarity matrix"},
+    {"diagonal_matrix", (PyCFunction)diagonal_matrix, METH_VARARGS, "Compute diagonal degree matrix"},
+    {"norm_matrix", (PyCFunction)norm_matrix, METH_VARARGS, "Compute normalized similarity matrix"},
     {"symnmf", (PyCFunction)symnmf, METH_VARARGS, "Perform SYMNMF algorithm"},
     {NULL, NULL, 0, NULL}};
 
