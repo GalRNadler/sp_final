@@ -6,52 +6,55 @@
 #include <string.h>
 #include "symnmf.h"
 
-void freeFuncMem(double** matrix, int vNum);
-void printTheFormat(double** datapoints, int vNum, int vSize);
-double sumVector(double *v1, int vSize);
-double calcSqrtDis(double *v1, double *v2, int vSize);
-double** similarityMatrix(int vNum, int vSize, double **datapoints);
-double** initializeMatrix(int vNum,int vSize);
-double** diagonalMatrix(int vNum, int vSize, double **datapoints);
-double** normalizedSimilarityMatrix(int vNum, int vSize, double **datapoints);
-double** calcSymnmf(int k, int vNum, double **norm_matrix, double** H);
-int isConvergence(int k, int vNum, double **H, double** next_h);
-double** getNextH(int k, int vNum, double **norm_matrix, double** H);
-double** readFromFile(char* file_name, int vNum, int vSize);
-void getMatrixDim(char* file_name, int* dim);
-double** multiplyMatrix(double** matrix1, double** matrix2, int rows1, int cols1, int cols2);
-double** transposeMatrix(double** matrix, int vNum, int vSize);
-void copy_matrix(double** targetMatrix, double** baseMatrix, int rows, int cols);
+#define MAX_ITER 300
+#define EPSILON 0.0001
+#define BETA 0.5
 
-double EPSILON = 0.0001;
-int MAX_ITER = 300;
-
-double** initializeMatrix(int vNum,int vSize) {
+double** init_matrix(int rows,int cols)
+{
     int i, j;
-    double** matrix = (double **) malloc(vNum * sizeof(double *));
-    if (matrix == NULL) {
-        fprintf(stderr, "An Error Has Occurred\n");
-        exit(EXIT_FAILURE);
+    double **matrix = (double**) malloc(rows * sizeof(double *));
+    if (!matrix)
+    {
+        return NULL;
     }
-    for (i = 0; i < vNum; i++) {
-        matrix[i] = (double *) malloc(vSize * sizeof(double));
-        if (matrix[i] == NULL) {
-            fprintf(stderr, "An Error Has Occurred\n");
-            exit(EXIT_FAILURE);
-        }
-        for (j = 0; j < vSize; j++) {
-            matrix[i][j] = 0;
+
+    for (i = 0; i < rows; i++)
+    {
+        matrix[i] = (double*) calloc(cols, sizeof(double));
+        if (!matrix[i])
+        {
+            for (j = 0; j < i; j++)
+            {
+                free(matrix[j]);
+            }
+            free(matrix);
+            return NULL;
         }
     }
     return matrix;
 }
 
-void printTheFormat(double** datapoints, int vNum, int vSize) {
+void free_matrix_memory(double **matrix, int vNum)
+{
+    int i;
+    if (!matrix)
+    {
+        return;
+    }
+    for (i = 0; i < vNum; i++)
+    {
+        free(matrix[i]);
+    }
+    free(matrix);
+}
+
+void print_matrix(double** datapoints, int vNum, int vSize) {
     int i, j;
-    for (i=0; i<vNum; i++) {
-        for (j=0; j<vSize; j++) {
+    for (i = 0; i < vNum; i++) {
+        for (j=0; j < vSize; j++) {
             printf("%.4f", datapoints[i][j]);
-            if (j!=vSize-1) {
+            if (j != vSize-1) {
                 printf(",");
             }
         }
@@ -59,88 +62,99 @@ void printTheFormat(double** datapoints, int vNum, int vSize) {
     }
 }
 
-double** similarityMatrix(int vNum, int vSize, double **datapoints) {
+double** calc_similarity_matrix(int vNum, int vSize, double **datapoints) {
     int i, j;
-    double** matrix = initializeMatrix(vNum, vNum);
+    double** matrix;
+    if ((matrix = init_matrix(vNum, vNum)) == NULL) {
+        return NULL;
+    }
     for (i = 0; i < vNum; i++) {
         for (j = 0; j < vNum; j++) {
-            if (i == j) {
-                matrix[i][j] = 0;
-            } else {
-                matrix[i][j] = calcSqrtDis(datapoints[i], datapoints[j], vSize);
-            }
+            matrix[i][j] = (i == j) ? 0 : calculate_squared_euclidean_distance(datapoints[i], datapoints[j], vSize);
         }
     }
     return matrix;
 }
 
-double** diagonalMatrix(int vNum, int vSize, double **datapoints) {
-    int i, j;
-    double** matrix = initializeMatrix(vNum, vNum);
-    double** sym_matrix = similarityMatrix(vNum, vSize, datapoints);
-
-    for (i = 0; i < vNum; i++) {
-        for (j = 0; j < vNum; j++) {
-            if (i != j) {
-                matrix[i][j] = 0;
-            } else {
-                matrix[i][j] = sumVector(sym_matrix[i], vNum);
-            }
-        }
-    }
-    freeFuncMem(sym_matrix, vNum);
-    return matrix;
-}
-
-double** normalizedSimilarityMatrix(int vNum, int vSize, double **datapoints) {
+double** calc_diagonal_matrix(int vNum, int vSize, double **datapoints) {
     int i;
-    double** res_da;
-    double** final_res;
-    double **A = similarityMatrix( vNum, vSize, datapoints);
-    double **D = diagonalMatrix(vNum, vSize, datapoints);
-    for (i = 0; i < vNum; ++i) {
-        D[i][i] = 1/ sqrt(D[i][i]);
+    double **matrix, **sim_matrix;
+    matrix = init_matrix(vNum, vNum);
+    sim_matrix = calc_similarity_matrix(vNum, vSize, datapoints); 
+    if (matrix == NULL || sim_matrix == NULL) {
+        free_matrix_memory(matrix, vNum);
+        free_matrix_memory(sim_matrix, vNum);
+        return NULL;
     }
-    res_da = multiplyMatrix(D, A, vNum, vNum, vNum);
-    final_res = multiplyMatrix(res_da, D, vNum, vNum, vNum);
-    freeFuncMem(A, vNum);
-    freeFuncMem(D, vNum);
-    freeFuncMem(res_da, vNum);
+
+    for (i = 0; i < vNum; i++) {
+        matrix[i][i] = sum_vector_coordinates(sim_matrix[i], vNum);
+    }
+    free_matrix_memory(sim_matrix, vNum);
+    return matrix;
+}
+
+double** calc_normalized_similarity_matrix(int vNum, int vSize, double **datapoints) {
+    int i;
+    double** res_da = NULL;
+    double** final_res = NULL;
+    double **A = calc_similarity_matrix( vNum, vSize, datapoints);
+    double **D = calc_diagonal_matrix(vNum, vSize, datapoints);
+    if (A == NULL || D == NULL) {
+        free_matrix_memory(A, vNum);
+        free_matrix_memory(D, vNum);
+    }
+
+    for (i = 0; i < vNum; ++i) {
+        D[i][i] = 1/sqrt(D[i][i]);
+    }
+    res_da = multiply_matrices(D, A, vNum, vNum, vNum);
+    final_res = res_da ? multiply_matrices(res_da, D, vNum, vNum, vNum) : NULL;
+
+    free_matrix_memory(A, vNum);
+    free_matrix_memory(D, vNum);
+    free_matrix_memory(res_da, vNum);
+
     return final_res;
 }
 
-double** getNextH(int k, int vNum, double **norm_matrix, double** H) {
+double** get_next_H_matrix(int k, int vNum, double **norm_matrix, double** H) {
     int i, j;
-    double top, bottom, tmp;
-    double beta = 0.5;
-    double** w_h_matrix;
-    double** h_hTranspose_matrix;
-    double** total_h_multiply;
-    double** trsaponse_h;
-    double** next_h = initializeMatrix(vNum, k);
+    double **WH, **HH_transpose, **HH_transpose_H, **H_transpose, **next_h;
+    if ((next_h = init_matrix(vNum, k)) == NULL) {
+        return NULL;
+    }
+    WH = multiply_matrices(norm_matrix, H, vNum, vNum, k);
+    H_transpose = calc_matrix_transpose(H, k, vNum);
+    HH_transpose = multiply_matrices(H, H_transpose, vNum, k, vNum);
+    HH_transpose_H =  multiply_matrices(HH_transpose, H, vNum, vNum, k);
 
-    w_h_matrix = multiplyMatrix(norm_matrix, H, vNum, vNum, k);
-    trsaponse_h = transposeMatrix(H, k, vNum);
-    h_hTranspose_matrix =  multiplyMatrix(H, trsaponse_h, vNum, k, vNum);
-    total_h_multiply =  multiplyMatrix(h_hTranspose_matrix, H, vNum, vNum, k);
+    if (WH == NULL || H_transpose == NULL || HH_transpose_H == NULL || HH_transpose_H == NULL)
+    {
+        free_matrix_memory(next_h, vNum);
+        free_matrix_memory(H_transpose, k);
+        free_matrix_memory(HH_transpose, vNum);
+        free_matrix_memory(HH_transpose_H, vNum);
+        free_matrix_memory(WH, vNum);
+        return NULL;
+    }
 
-    for (i=0; i< vNum ;i++) {
-        for (j=0; j< k; j++) {
-            top = w_h_matrix[i][j];
-            bottom = total_h_multiply[i][j];
-            tmp = (top / bottom) * beta;
-            tmp = (1- beta) + tmp;
-            next_h[i][j] = H[i][j] * tmp;
+    for (i = 0; i < vNum; i++)
+    {
+        for (j = 0; j < k; j++)
+        {
+            double ratio = WH[i][j] / HH_transpose_H[i][j];
+            next_h[i][j] = H[i][j] * (BETA * ratio + (1 - BETA));
         }
     }
-    freeFuncMem(w_h_matrix, vNum);
-    freeFuncMem(trsaponse_h, k);
-    freeFuncMem(h_hTranspose_matrix, vNum);
-    freeFuncMem(total_h_multiply, vNum);
+    free_matrix_memory(H_transpose, k);
+    free_matrix_memory(HH_transpose, vNum);
+    free_matrix_memory(HH_transpose_H, vNum);
+    free_matrix_memory(WH, vNum);
     return next_h;
 }
 
-int isConvergence(int k, int vNum, double **H, double** next_h) {
+int has_converged(int k, int vNum, double **H, double** next_h) {
     int i, j;
     double norm = 0.0;
 
@@ -150,28 +164,34 @@ int isConvergence(int k, int vNum, double **H, double** next_h) {
         }
     }
 
-    if (norm < EPSILON) {
-        return 1;
-    }
-    return 0;
+    return (norm < EPSILON);
 }
 
-double** calcSymnmf(int k, int vNum, double **norm_matrix, double** H) {
-    int currIter = 0;
-    double** curr_h;
-    double** next_h;
+double** calc_symnmf(int k, int vNum, double **norm_matrix, double** H) {
+    int i;
+    double **curr_h, **next_h, **temp;
     curr_h = H;
-    next_h = getNextH(k, vNum, norm_matrix, H);
-    while ((isConvergence(k, vNum, curr_h, next_h) == 0) && currIter < MAX_ITER) {
-        copy_matrix(curr_h, next_h,vNum, k);
-        next_h = getNextH(k, vNum, norm_matrix, H);
-        currIter++;
+    if ((next_h = get_next_H_matrix(k, vNum, norm_matrix, H)) == NULL) {
+        return NULL;
+    }
+
+    for (i = 0; i < MAX_ITER && !has_converged(k, vNum, curr_h, next_h); i++)
+    {
+        copy_matrix(curr_h, next_h, vNum, k);
+        temp = get_next_H_matrix(k, vNum, norm_matrix, curr_h);
+        if (!temp)
+        {
+            free_matrix_memory(next_h, vNum);
+            return NULL;
+        }
+        free_matrix_memory(next_h, vNum);
+        next_h = temp;
     }
 
     return next_h;
 }
 
-double sumVector(double *v1, int vSize) {
+double sum_vector_coordinates(double *v1, int vSize) {
     int i;
     double sum = 0.0;
     for (i = 0; i < vSize ; i++) {
@@ -180,7 +200,7 @@ double sumVector(double *v1, int vSize) {
     return sum;
 }
 
-double calcSqrtDis(double *v1, double *v2, int vSize) {
+double calculate_squared_euclidean_distance(double *v1, double *v2, int vSize) {
     int i;
     double sum = 0.0;
     for (i = 0; i < vSize ; i++) {
@@ -189,51 +209,50 @@ double calcSqrtDis(double *v1, double *v2, int vSize) {
     return exp((-0.5) * sum);
 }
 
-void freeFuncMem(double** matrix, int vNum){
-    int i;
-    for (i=0; i<vNum; i++){
-        free(matrix[i]);
-    }
-    free(matrix);
-}
-
-double** readFromFile(char* file_name, int vNum, int vSize) {
+double **read_file(const char *file_name, int rows, int cols)
+{
+    char *token = NULL, *line = NULL;
+    double **datapoints;
+    int i = 0, j = 0;
     FILE *file;
-    char *line = NULL;
     size_t line_length = 0;
     ssize_t read;
-    double** datapoints;
-    double point;
-    char *token;
-    int row = 0, col;
 
     file = fopen(file_name, "r");
     if (file == NULL) {
-        fprintf(stderr, "An Error Has Occurred\n");
+        printf("An Error Has Occoured");
         exit(EXIT_FAILURE);
     }
-    datapoints = initializeMatrix(vNum, vSize);
-
-    while ((read = getline(&line, &line_length, file)) != -1) {
-        col = 0;
-        token = strtok(line, ",");
-        while (token != NULL) {
-            point = strtod(token, NULL);
-            datapoints[row][col] = point;
-            col ++;
-            token = strtok(NULL, ",");
-        }
-        row ++;
+    if ((datapoints = init_matrix(rows, cols)) == NULL)
+    {
+        fclose(file);
+        return NULL;
     }
 
-    fclose(file);
+    while ((read = getline(&line, &line_length, file)) != -1 && i < rows) {
+        token = strtok(line, ",");
+        for (j = 0; j < cols && token != NULL; j++)
+        {
+            datapoints[i][j] = strtod(token, NULL);
+            token = strtok(NULL, ",");
+        }
+        i++;
+    }
+
     free(line);
     free(token);
+    fclose(file);
+
+    if (i != rows)
+    {
+        free_matrix_memory(datapoints, rows);
+        return NULL;
+    }
 
     return datapoints;
 }
 
-void getMatrixDim(char* file_name, int* dim) {
+void get_matrix_dim(char* file_name, int* dim) {
     FILE *file;
     char *line = NULL;
     size_t line_length = 0;
@@ -244,7 +263,6 @@ void getMatrixDim(char* file_name, int* dim) {
     file = fopen(file_name, "r");
 
     if (file == NULL) {
-        perror("Error opening file");
         return;
     }
 
@@ -265,13 +283,20 @@ void getMatrixDim(char* file_name, int* dim) {
     free(line);
 }
 
-double** multiplyMatrix(double** matrix1, double** matrix2, int rows1, int cols1, int cols2) {
+double** multiply_matrices(double** matrix1, double** matrix2, int rows1, int cols1, int cols2) {
     int i, j, k;
-    double** resMatrix = initializeMatrix(rows1, cols2);
+    double** resMatrix;
+    if (!matrix1 || !matrix2 || (resMatrix = init_matrix(rows1, cols2)) == NULL)
+    {
+        return NULL;
+    }
 
-    for (i = 0; i < rows1; i++) {
-        for (j = 0; j < cols2; j++) {
-            for (k = 0; k < cols1; k++) {
+    for (i = 0; i < rows1; i++)
+    {
+        for (j = 0; j < cols2; j++)
+        {
+            for (k = 0; k < cols1; k++)
+            {
                 resMatrix[i][j] += matrix1[i][k] * matrix2[k][j];
             }
         }
@@ -279,9 +304,12 @@ double** multiplyMatrix(double** matrix1, double** matrix2, int rows1, int cols1
     return resMatrix;
 }
 
-double** transposeMatrix(double** matrix, int vNum, int vSize) {
+double** calc_matrix_transpose(double** matrix, int vNum, int vSize) {
     int i, j;
-    double** resMatrix = initializeMatrix(vNum, vSize);
+    double **resMatrix;
+    if ((resMatrix = init_matrix(vNum, vSize)) == NULL) {
+        return NULL;
+    }
 
     for (i=0; i< vNum; i++) {
         for (j=0; j< vSize; j++) {
@@ -291,47 +319,64 @@ double** transposeMatrix(double** matrix, int vNum, int vSize) {
     return resMatrix;
 }
 
-void copy_matrix(double** targetMatrix, double** baseMatrix, int rows, int cols) {
-    int i,j;
-    for(i = 0; i < rows; i++) {
-        for (j = 0; j < cols; j++) {
-            targetMatrix[i][j] = baseMatrix[i][j];
-        }
+void copy_matrix(double **dest, double **src, int rows, int cols)
+{
+    int i;
+    for (i = 0; i < rows; i++)
+    {
+        memcpy(dest[i], src[i], cols * sizeof(double));
+    }
+}
+
+double **calc_matrix_by_goal(char *goal, double **datapoints, int vNum, int vSize)
+{
+    if (!strcmp(goal, "sym"))
+    {
+        return calc_similarity_matrix(vNum, vSize, datapoints);
+    }
+    else if (!strcmp(goal, "ddg"))
+    {
+        return calc_diagonal_matrix(vNum, vSize, datapoints);
+    }
+    else if (!strcmp(goal, "norm"))
+    {
+        return calc_normalized_similarity_matrix(vNum, vSize, datapoints);
+    }
+    else
+    {
+        return NULL;
     }
 }
 
 int main(int argc, char* argv[]) {
     int vNum, vSize;
-    double** datapoints;
-    double** res_matrix;
-    char* goal = argv[1];
-    char* file_name = argv[2];
-    int* dim = calloc(sizeof(int), 2);
+    double **datapoints, **res_matrix;
+    char *goal = argv[1];
+    char *file_name = argv[2];
+    int dim[2];
 
     if (argc != 3){
-        return 0;
+        return EXIT_FAILURE;
     }
 
-    getMatrixDim(file_name, dim);
+    get_matrix_dim(file_name, dim);
     vNum = dim[0];
     vSize = dim[1];
 
-    datapoints = readFromFile(file_name, vNum, vSize);
+    if ((datapoints = read_file(file_name, vNum, vSize)) == NULL) {
+        printf("An Error Has Occoured");
+        return EXIT_FAILURE;
+    }
 
-    if (!strcmp(goal, "sym")) {
-        res_matrix = similarityMatrix(vNum, vSize, datapoints);
+    res_matrix = calc_matrix_by_goal(goal, datapoints, vNum, vSize);
+    free_matrix_memory(datapoints, vNum);
+
+    if (res_matrix == NULL) {
+        printf("An Error Has Occoured");
+        return EXIT_FAILURE;
     }
-    else if (!strcmp(goal, "ddg")) {
-        res_matrix = diagonalMatrix(vNum, vSize, datapoints);
-    }
-    else if (!strcmp(goal, "norm")) {
-        res_matrix = normalizedSimilarityMatrix(vNum, vSize, datapoints);
-    }
-    else {
-        return 1;
-    }
-    freeFuncMem(datapoints, vNum);
-    printTheFormat(res_matrix, vNum, vNum);
-    freeFuncMem(res_matrix, vNum);
-    return 0;
+    
+    print_matrix(res_matrix, vNum, vNum);
+    free_matrix_memory(res_matrix, vNum);
+    return EXIT_SUCCESS;
 }
